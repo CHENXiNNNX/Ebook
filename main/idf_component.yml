@@ -1,0 +1,16 @@
+## IDF Component Manager Manifest File
+dependencies:
+  ## Required IDF version
+  idf:
+    version: '>=4.1.0'
+  h2zero/esp-nimble-cpp: ^2.5.0
+  espressif/esp-idf-cxx: ^1.0.2-beta
+  espressif/cjson: ^1.7.19~2
+  espressif/esp_tinyusb: ^2.2.0
+  espressif/esp_websocket_client: ^1.7.0
+  joltwallet/littlefs: ^1.21.1
+  espressif/esp_codec_dev: ^1.5.10
+  espressif/freetype: ^2.14.2
+  cfscn/esp_lcd_touch_ft6x36: ^1.0.8
+  espressif/esp_audio_codec: ^2.5.0
+  espressif/esp_jpeg: ^1.3.1

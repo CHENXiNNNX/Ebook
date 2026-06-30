@@ -1,0 +1,88 @@
+menu "Ebook 存储"
+
+    config EBOOK_STORAGE_FORMAT_IF_MOUNT_FAILED
+        bool "挂载失败时格式化 userdata/assets"
+        default y
+        help
+            开启: userdata (FAT) 与 assets (LittleFS) 在挂载失败时会由驱动尝试格式化后再挂载。
+            关闭: 挂载失败直接返回错误, 不自动格式化。
+            从 LittleFS 迁移到 FAT 后首次启动建议保持开启, 会自动格式化 userdata。
+
+    config EBOOK_INTERNAL_MAX_FILES
+        int "userdata FAT 最大同时打开文件数"
+        range 4 32
+        default 10
+        help
+            /int 分区 (FAT) 允许同时打开的最大文件数。
+
+    menu "Flash 预置镜像"
+        config EBOOK_FLASH_EMBED_ASSETS
+            bool "构建并烧录 assets (LittleFS) 镜像"
+            default y
+            help
+                开启: 从 assets/littlefs_assets 生成 assets.bin,
+                并在 idf.py flash 时写入 assets 分区。
+                关闭: 跳过镜像生成与烧录
+
+        config EBOOK_FLASH_EMBED_USERDATA
+            bool "构建并烧录 userdata (FAT) 镜像"
+            default y
+            help
+                开启: 从 assets/fat_userdata 生成 userdata FAT 镜像,
+                并在 idf.py flash 时写入 userdata 分区。
+                关闭: 跳过镜像生成与烧录
+
+    endmenu
+
+    menu "SD 卡 (SDMMC, 挂载 /sd)"
+        depends on SOC_SDMMC_HOST_SUPPORTED
+
+        config EBOOK_SD_SDMMC_ENABLE
+            bool "启用 SDMMC 挂载"
+            default y
+            help
+                关闭后 mount_sd() 固定返回 ESP_ERR_NOT_SUPPORTED。
+                引脚、总线宽度、CD 检测均由 config.hpp 中 TF_CARD_* 自动推断。
+
+        config EBOOK_SD_SPEED_HS
+            bool "SDMMC High Speed 模式"
+            depends on EBOOK_SD_SDMMC_ENABLE
+            default n
+
+        config EBOOK_SD_FORMAT_IF_MOUNT_FAILED
+            bool "挂载失败时对 SD 卡分区并格式化"
+            depends on EBOOK_SD_SDMMC_ENABLE
+            default n
+            help
+                与片内 userdata/assets 的格式化选项无关。慎用, 否则可能误清空 TF 卡数据。
+
+        config EBOOK_SD_HOTPLUG_SERVICE_MS
+            int "热插拔轮询间隔"
+            depends on EBOOK_SD_SDMMC_ENABLE
+            default 500
+            range 100 30000
+            help
+                TF_CARD_CD 为 NC 时: 软件轮询尝试 mount_sd 的最小间隔。
+                TF_CARD_CD 有效时: 读取 CD 电平并决策的最小间隔。
+
+        config EBOOK_SD_MAX_FILES
+            int "FAT 同时打开文件数上限"
+            depends on EBOOK_SD_SDMMC_ENABLE
+            default 5
+            range 1 16
+
+    endmenu
+
+endmenu
+
+menu "高德API Key"
+
+    config EBOOK_AMAP_WEATHER_KEY
+        string "高德 Web 服务 API Key"
+        default ""
+        help
+            在 https://lbs.amap.com 控制台申请 Web 服务 Key。
+            API接口: 天气查询和IP定位
+            留空时天气 App 提示未配置 Key。
+
+endmenu

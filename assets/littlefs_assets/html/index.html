@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>电子书 · 文件传输</title>
+<style>
+:root {
+  --bg: #f4f5f7; --card: #ffffff; --ink: #1c1e21; --sub: #65676b;
+  --line: #e4e6e9; --acc: #2563eb; --acc-soft: #eff4ff; --danger: #dc2626;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--bg); color: var(--ink); min-height: 100vh;
+}
+.wrap { max-width: 720px; margin: 0 auto; padding: 16px 12px 80px; }
+header { display: flex; align-items: center; gap: 10px; padding: 8px 4px 16px; }
+.logo {
+  width: 38px; height: 38px; border-radius: 10px; background: var(--acc);
+  color: #fff; display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+}
+header h1 { font-size: 18px; font-weight: 600; }
+header p { font-size: 12px; color: var(--sub); }
+
+.bar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.btn {
+  border: none; border-radius: 8px; padding: 9px 14px; font-size: 14px;
+  cursor: pointer; background: var(--card); color: var(--ink);
+  border: 1px solid var(--line); display: inline-flex; align-items: center; gap: 6px;
+}
+.btn.primary { background: var(--acc); border-color: var(--acc); color: #fff; }
+.btn:active { opacity: .75; }
+
+.crumb {
+  background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+  padding: 10px 12px; font-size: 13px; margin-bottom: 12px;
+  display: flex; align-items: center; gap: 4px; flex-wrap: wrap; word-break: break-all;
+}
+.crumb a { color: var(--acc); text-decoration: none; }
+.crumb span.sep { color: var(--sub); }
+
+.panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.row {
+  display: flex; align-items: center; gap: 10px; padding: 12px;
+  border-bottom: 1px solid var(--line); font-size: 14px;
+}
+.row:last-child { border-bottom: none; }
+.row .ic { width: 34px; height: 34px; border-radius: 8px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 17px;
+  background: var(--acc-soft); }
+.row .meta { flex: 1; min-width: 0; }
+.row .meta .n { word-break: break-all; }
+.row .meta .n.dir { color: var(--acc); cursor: pointer; }
+.row .meta .s { font-size: 11px; color: var(--sub); margin-top: 2px; }
+.row .ops { display: flex; gap: 6px; flex-shrink: 0; }
+.iconbtn {
+  width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line);
+  background: var(--card); cursor: pointer; font-size: 14px;
+  display: flex; align-items: center; justify-content: center; color: var(--ink);
+}
+.iconbtn.del { color: var(--danger); }
+.empty { padding: 36px 12px; text-align: center; color: var(--sub); font-size: 13px; }
+
+.drop {
+  margin-top: 12px; border: 2px dashed var(--line); border-radius: 12px;
+  padding: 22px 12px; text-align: center; color: var(--sub); font-size: 13px;
+  transition: all .15s;
+}
+.drop.hover { border-color: var(--acc); background: var(--acc-soft); color: var(--acc); }
+
+.toast {
+  position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%);
+  background: rgba(28,30,33,.92); color: #fff; font-size: 13px;
+  padding: 10px 18px; border-radius: 20px; opacity: 0; pointer-events: none;
+  transition: opacity .25s; max-width: 86vw; text-align: center; z-index: 99;
+}
+.toast.show { opacity: 1; }
+
+.prog-wrap { margin-top: 12px; display: none; }
+.prog-wrap.show { display: block; }
+.prog-label { font-size: 12px; color: var(--sub); margin-bottom: 6px; word-break: break-all; }
+.prog-bg { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; }
+.prog-fg { height: 100%; width: 0; background: var(--acc); border-radius: 4px; transition: width .15s; }
+
+/* 自定义弹层（Captive Portal 内 confirm/prompt 常被拦截） */
+.mask {
+  position: fixed; inset: 0; background: rgba(0,0,0,.45);
+  display: none; align-items: center; justify-content: center; z-index: 200; padding: 16px;
+}
+.mask.show { display: flex; }
+.dlg {
+  background: var(--card); border-radius: 14px; width: 100%; max-width: 320px;
+  padding: 20px 16px 14px; box-shadow: 0 8px 32px rgba(0,0,0,.18);
+}
+.dlg h3 { font-size: 16px; margin-bottom: 8px; }
+.dlg p { font-size: 14px; color: var(--sub); margin-bottom: 14px; word-break: break-all; }
+.dlg input {
+  width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px;
+  font-size: 15px; margin-bottom: 14px; outline: none;
+}
+.dlg input:focus { border-color: var(--acc); }
+.dlg .acts { display: flex; gap: 8px; justify-content: flex-end; }
+.dlg .acts .btn { min-width: 72px; justify-content: center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">📖</div>
+    <div>
+      <h1>电子书 · 文件传输</h1>
+      <p>通过浏览器向设备用户分区收发文件</p>
+    </div>
+  </header>
+
+  <div class="bar">
+    <button type="button" class="btn primary" id="btnUpload">⬆ 上传文件</button>
+    <button type="button" class="btn" id="btnMkdir">📁 新建文件夹</button>
+    <button type="button" class="btn" id="btnReload">⟳ 刷新</button>
+  </div>
+
+  <div class="crumb" id="crumb"></div>
+  <div class="panel" id="list"><div class="empty">加载中…</div></div>
+
+  <div class="prog-wrap" id="progWrap">
+    <div class="prog-label" id="progLabel"></div>
+    <div class="prog-bg"><div class="prog-fg" id="progFg"></div></div>
+  </div>
+
+  <div class="drop" id="drop">将文件拖放到此处上传</div>
+</div>
+
+<input type="file" id="file" multiple style="display:none">
+<div class="toast" id="toast"></div>
+
+<!-- 确认删除 -->
+<div class="mask" id="dlgDel">
+  <div class="dlg">
+    <h3>确认删除</h3>
+    <p id="dlgDelMsg"></p>
+    <div class="acts">
+      <button type="button" class="btn" id="dlgDelCancel">取消</button>
+      <button type="button" class="btn primary" id="dlgDelOk" style="background:var(--danger);border-color:var(--danger)">删除</button>
+    </div>
+  </div>
+</div>
+
+<!-- 新建文件夹 -->
+<div class="mask" id="dlgMkdir">
+  <div class="dlg">
+    <h3>新建文件夹</h3>
+    <input type="text" id="dlgMkdirInput" placeholder="文件夹名称" autocomplete="off">
+    <div class="acts">
+      <button type="button" class="btn" id="dlgMkdirCancel">取消</button>
+      <button type="button" class="btn primary" id="dlgMkdirOk">创建</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let cwd = "/";
+let pendingDel = null;
+const $ = id => document.getElementById(id);
+
+function toast(msg, ms) {
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(t._tm);
+  t._tm = setTimeout(() => t.classList.remove("show"), ms || 2200);
+}
+
+function fmtSize(n) {
+  if (n < 1024) return n + " B";
+  if (n < 1048576) return (n / 1024).toFixed(1) + " KB";
+  return (n / 1048576).toFixed(2) + " MB";
+}
+
+function joinPath(dir, name) {
+  return dir === "/" ? "/" + name : dir + "/" + name;
+}
+
+function esc(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+}
+
+function renderCrumb() {
+  const parts = cwd.split("/").filter(Boolean);
+  let html = '<a href="#" data-path="/">用户分区</a>';
+  let acc = "";
+  for (const p of parts) {
+    acc += "/" + p;
+    html += '<span class="sep">/</span><a href="#" data-path="' + esc(acc) + '">' + esc(p) + "</a>";
+  }
+  $("crumb").innerHTML = html;
+}
+
+function go(p) { cwd = p; load(); }
+
+async function load() {
+  renderCrumb();
+  const box = $("list");
+  box.innerHTML = '<div class="empty">加载中…</div>';
+  try {
+    const r = await fetch("/api/list?path=" + encodeURIComponent(cwd));
+    if (!r.ok) throw 0;
+    const d = await r.json();
+    const ent = d.entries || [];
+    ent.sort((a, b) => (b.d - a.d) || a.n.localeCompare(b.n, "zh"));
+    if (!ent.length) {
+      box.innerHTML = '<div class="empty">空目录，点击上方按钮上传文件</div>';
+      return;
+    }
+    let html = "";
+    for (const e of ent) {
+      const full = joinPath(cwd, e.n);
+      html += '<div class="row"><div class="ic">' + (e.d ? "📁" : "📄") + "</div>" +
+        '<div class="meta"><div class="n' + (e.d ? " dir" : "") + '"' +
+        (e.d ? ' data-path="' + esc(full) + '"' : "") + ">" + esc(e.n) + "</div>" +
+        '<div class="s">' + (e.d ? "文件夹" : fmtSize(e.s)) + "</div></div>" +
+        '<div class="ops">' +
+        (e.d ? "" :
+          '<button type="button" class="iconbtn" data-act="dl" data-path="' + esc(full) +
+          '" data-name="' + esc(e.n) + '">⬇</button>') +
+        '<button type="button" class="iconbtn del" data-act="del" data-path="' + esc(full) +
+        '" data-dir="' + (e.d ? "1" : "0") + '">✕</button>' +
+        "</div></div>";
+    }
+    box.innerHTML = html;
+  } catch (_) {
+    box.innerHTML = '<div class="empty">读取失败，请确认设备未被电脑(USB)占用后刷新</div>';
+  }
+}
+
+async function downloadFile(path, name) {
+  toast("下载中…", 60000);
+  try {
+    const r = await fetch("/api/download?path=" + encodeURIComponent(path));
+    if (!r.ok) throw 0;
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast("下载完成");
+  } catch (_) {
+    toast("下载失败", 2600);
+  }
+}
+
+function showDelDlg(path, isDir) {
+  pendingDel = { path, isDir };
+  const name = path.split("/").pop();
+  $("dlgDelMsg").textContent = name + (isDir ? "（仅空文件夹）" : "");
+  $("dlgDel").classList.add("show");
+}
+
+async function doDelete() {
+  if (!pendingDel) return;
+  const { path, isDir } = pendingDel;
+  pendingDel = null;
+  $("dlgDel").classList.remove("show");
+  try {
+    const r = await fetch("/api/delete?path=" + encodeURIComponent(path) +
+      "&dir=" + (isDir ? "1" : "0"), { method: "POST" });
+    if (r.ok) { toast("已删除"); load(); }
+    else toast(isDir ? "删除失败：文件夹非空？" : "删除失败", 2600);
+  } catch (_) {
+    toast("删除失败", 2600);
+  }
+}
+
+function showMkdirDlg() {
+  $("dlgMkdirInput").value = "";
+  $("dlgMkdir").classList.add("show");
+  setTimeout(() => $("dlgMkdirInput").focus(), 80);
+}
+
+async function doMkdir() {
+  const name = $("dlgMkdirInput").value.trim();
+  $("dlgMkdir").classList.remove("show");
+  if (!name) return;
+  if (/[\\/:*?"<>|]/.test(name)) { toast("名称含非法字符"); return; }
+  try {
+    const r = await fetch("/api/mkdir?path=" +
+      encodeURIComponent(joinPath(cwd, name)), { method: "POST" });
+    if (r.ok) { toast("已创建"); load(); }
+    else toast("创建失败", 2600);
+  } catch (_) {
+    toast("创建失败", 2600);
+  }
+}
+
+async function uploadAll(files) {
+  if (!files.length) return;
+  for (let i = 0; i < files.length; i++) {
+    const f = files[i];
+    $("progWrap").classList.add("show");
+    $("progLabel").textContent =
+      "上传中 (" + (i + 1) + "/" + files.length + ")：" + f.name;
+    try {
+      await uploadOne(f);
+    } catch (_) {
+      toast("上传失败：" + f.name, 3000);
+      break;
+    }
+  }
+  $("progWrap").classList.remove("show");
+  $("progFg").style.width = "0";
+  toast("上传完成");
+  load();
+}
+
+function uploadOne(f) {
+  return new Promise((ok, bad) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/api/upload?path=" + encodeURIComponent(cwd) +
+      "&name=" + encodeURIComponent(f.name));
+    xhr.upload.onprogress = e => {
+      if (e.lengthComputable)
+        $("progFg").style.width = (e.loaded / e.total * 100).toFixed(1) + "%";
+    };
+    xhr.onload = () => xhr.status === 200 ? ok() : bad();
+    xhr.onerror = bad;
+    xhr.send(f);
+  });
+}
+
+// 顶部按钮
+$("btnUpload").addEventListener("click", () => $("file").click());
+$("btnMkdir").addEventListener("click", showMkdirDlg);
+$("btnReload").addEventListener("click", load);
+$("file").addEventListener("change", ev => {
+  uploadAll([...ev.target.files]);
+  ev.target.value = "";
+});
+
+// 面包屑导航
+$("crumb").addEventListener("click", e => {
+  const a = e.target.closest("a[data-path]");
+  if (a) { e.preventDefault(); go(a.dataset.path); }
+});
+
+// 文件列表：事件委托（下载 / 删除 / 进入文件夹）
+$("list").addEventListener("click", e => {
+  const btn = e.target.closest("button[data-act]");
+  if (btn) {
+    e.preventDefault();
+    if (btn.dataset.act === "dl")
+      downloadFile(btn.dataset.path, btn.dataset.name);
+    else if (btn.dataset.act === "del")
+      showDelDlg(btn.dataset.path, btn.dataset.dir === "1");
+    return;
+  }
+  const dir = e.target.closest(".n.dir[data-path]");
+  if (dir) go(dir.dataset.path);
+});
+
+// 弹层按钮
+$("dlgDelCancel").addEventListener("click", () => {
+  pendingDel = null;
+  $("dlgDel").classList.remove("show");
+});
+$("dlgDelOk").addEventListener("click", doDelete);
+$("dlgMkdirCancel").addEventListener("click", () => $("dlgMkdir").classList.remove("show"));
+$("dlgMkdirOk").addEventListener("click", doMkdir);
+$("dlgMkdirInput").addEventListener("keydown", e => {
+  if (e.key === "Enter") doMkdir();
+});
+
+// 拖放上传
+const drop = $("drop");
+["dragover", "dragenter"].forEach(t => drop.addEventListener(t, e => {
+  e.preventDefault(); drop.classList.add("hover");
+}));
+["dragleave", "drop"].forEach(t => drop.addEventListener(t, e => {
+  e.preventDefault(); drop.classList.remove("hover");
+}));
+drop.addEventListener("drop", e => uploadAll([...e.dataTransfer.files]));
+
+load();
+</script>
+</body>
+</html>

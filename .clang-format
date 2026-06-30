@@ -1,0 +1,107 @@
+---
+# ESP-IDF / 嵌入式 C++ 工程常用格式化规则
+# - 命名空间：紧凑 + 开括号与 namespace 同行（内联风格），推荐使用 C++17「嵌套命名空间」写法：namespace app::net::wifi {
+# - 函数 / if / class 等：仍保持 Allman（{ 单独一行）
+# - 指针靠左；不自动重排 #include
+
+Language: Cpp
+Standard: c++17
+
+BasedOnStyle: LLVM
+
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ContinuationIndentWidth: 4
+ColumnLimit: 100
+
+# CompactNamespaces: 合并连续 namespace，便于写成紧凑的多层结构
+NamespaceIndentation: None
+CompactNamespaces: true
+FixNamespaceComments: true
+
+# 命名空间采用「内联」开括号；其余块维持 Allman
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterCaseLabel: false
+  AfterClass: true
+  AfterControlStatement: Always
+  AfterEnum: true
+  AfterFunction: true
+  AfterNamespace: false
+  AfterStruct: true
+  AfterUnion: true
+  AfterExternBlock: true
+  BeforeCatch: true
+  BeforeElse: true
+  IndentBraces: false
+  SplitEmptyFunction: true
+  SplitEmptyNamespace: false
+  SplitEmptyRecord: true
+
+# 构造函数初始化列表：与 i2c.cc 等一致的「前置逗号」风格
+BreakConstructorInitializers: BeforeComma
+BreakInheritanceList: BeforeComma
+PackConstructorInitializers: BinPack
+
+AllowShortBlocksOnASingleLine: Never
+AllowShortEnumsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLambdasOnASingleLine: Inline
+AllowShortLoopsOnASingleLine: false
+
+AlwaysBreakTemplateDeclarations: Yes
+AlwaysBreakAfterDefinitionReturnType: None
+
+DerivePointerAlignment: false
+PointerAlignment: Left
+ReferenceAlignment: Pointer
+
+AlignAfterOpenBracket: Align
+AlignOperands: true
+AlignTrailingComments: true
+ReflowComments: true
+
+BreakBeforeBinaryOperators: None
+BreakBeforeTernaryOperators: true
+BreakStringLiterals: true
+
+IndentCaseLabels: true
+IndentWrappedFunctionNames: false
+
+SpaceAfterCStyleCast: false
+SpaceAfterLogicalNot: false
+SpaceAfterTemplateKeyword: true
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeCpp11BracedList: false
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeInheritanceColon: true
+SpaceBeforeParens: ControlStatementsExceptForEachMacros
+SpacesBeforeTrailingComments: 1
+SpacesInAngles: Never
+SpacesInCStyleCastParentheses: false
+SpacesInContainerLiterals: false
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+
+Cpp11BracedListStyle: true
+
+# 嵌入式工程常依赖包含顺序（FreeRTOS/驱动），关闭自动排序
+SortIncludes: false
+IncludeBlocks: Preserve
+
+# ESP-IDF / 常见循环宏，便于正确识别为「foreach」块
+ForEachMacros:
+  - LIST_FOREACH
+  - LIST_FOREACH_SAFE
+  - SLIST_FOREACH
+  - SLIST_FOREACH_SAFE
+  - STAILQ_FOREACH
+  - STAILQ_FOREACH_SAFE
+  - TAILQ_FOREACH
+  - TAILQ_FOREACH_SAFE
+
+StatementMacros:
+  - Q_UNUSED
+  - QT_REQUIRE_VERSION

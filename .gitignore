@@ -1,0 +1,56 @@
+# esp-idf
+/build/
+build/
+
+# build artifacts (root / out-of-tree)
+*.elf
+*.map
+*.bin
+!assets/**/*.bin
+!**/sdkconfig.defaults
+
+# component manager
+/managed_components/
+/dependencies.lock
+
+# menuconfig (per-developer; use sdkconfig.defaults in repo)
+/sdkconfig
+/sdkconfig.old
+
+# third-party & reference trees (track design doc only)
+/others/*
+!/others/界面设计.md
+
+# scratch / examples
+/examples/
+/temp/
+
+# firmware release packages (attach via GitHub Release)
+/dist/
+
+# python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+venv/
+.venv/
+
+# cmake
+/cmake-build*/
+
+# IDE / OS
+.idea/
+.cache/
+*.swp
+*~
+
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IntelliSense (optional local settings)
+.vscode/
+
+# docker
+/.devcontainer/
